@@ -24,12 +24,23 @@ module.exports = function(theme, env, app){
     });
 
     env.engine.addFilter('beautify', function(str) {
-        return beautifyHTML(str, {
+        const openingComment = 'Temporary closing tag for beautification';
+        const closingComment = 'End temporary closing tag for beautification';
+        const indentSize = 4;
+        const placeholderRegExp = /<!-- (\/[a-z]+) -->/g;
+
+        str = str.replace(placeholderRegExp, `<!-- ${openingComment} --><$1><!-- ${closingComment} -->`);
+
+        const closingTagRegExp = new RegExp(`\\s{${indentSize}}<!-- ${openingComment} -->\\s+?<(\/[a-z]+)>\\s+?<!-- ${closingComment} -->`, 'g')
+
+        str = beautifyHTML(str, {
             // TODO: move to config
-            indent_size: 4,
+            indent_size: indentSize,
             preserve_newlines: true,
             max_preserve_newlines: 1
-        });
+        })
+
+        return str.replace(closingTagRegExp, '<!-- $1 -->')
     });
 
     env.engine.addFilter('resourceUrl', function(str) {
