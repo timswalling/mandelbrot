@@ -28,17 +28,38 @@ module.exports = function(theme, env, app){
         const closingComment = 'End temporary closing tag for beautification';
         const indentSize = 4;
         const placeholderRegExp = /<!-- (\/[a-z]+) -->/g;
+        const wrapperRegExp = /^(<div>\s+)|(\s+<\/div>)$/g;
+
+        const indentRegExp = new RegExp(`\\n {${indentSize}}`, 'g');
 
         str = str.replace(placeholderRegExp, `<!-- ${openingComment} --><$1><!-- ${closingComment} -->`);
 
         const closingTagRegExp = new RegExp(`\\s{${indentSize}}<!-- ${openingComment} -->\\s+?<(\/[a-z]+)>\\s+?<!-- ${closingComment} -->`, 'g')
 
+        // Wrap the string in a div to avoid JS-Beautify bugs
+        str = `<div>${str}</div>`
+
         str = beautifyHTML(str, {
             // TODO: move to config
             indent_size: indentSize,
             preserve_newlines: true,
-            max_preserve_newlines: 1
+            max_preserve_newlines: 1,
+            unformatted: [
+                'a',
+                'b',
+                'em',
+                'i',
+                'span',
+                'strong',
+                'sub',
+                'sup',
+                'u',
+                'strike'
+            ]
         })
+
+        str = str.replace(wrapperRegExp, '')
+        str = str.replace(indentRegExp, '\n')
 
         return str.replace(closingTagRegExp, '<!-- $1 -->')
     });
